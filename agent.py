@@ -23,18 +23,16 @@ if not api_key:
 api_key = api_key.strip('"').strip("'")
 
 if not api_key.startswith(("sk-", "tvoj-api")):  # Allow placeholder for testing
-    raise ValueError(f"Invalid OpenAI API key format. Key starts with: {api_key[:10]}...")
+    raise ValueError(
+        f"Invalid OpenAI API key format. Key starts with: {api_key[:10]}..."
+    )
 
 logger.info(f"API key loaded: {api_key[:10]}...{api_key[-5:]}")
 
 # Initialize the LLM with error handling
 try:
     llm = ChatOpenAI(
-        model="gpt-4", 
-        temperature=0.7,
-        api_key=api_key,
-        max_retries=3,
-        timeout=30
+        model="gpt-4", temperature=0.7, api_key=api_key, max_retries=3, timeout=30
     )
     logger.info("ChatOpenAI initialized successfully")
 except Exception as e:
@@ -42,11 +40,16 @@ except Exception as e:
     raise
 
 # Create a prompt template that includes chat history
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful AI assistant. Continue the conversation naturally."),
-    MessagesPlaceholder(variable_name="chat_history"),
-    ("human", "{input}")
-])
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "You are a helpful AI assistant. Continue the conversation naturally.",
+        ),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{input}"),
+    ]
+)
 
 # Create the chain
 chain = prompt | llm
@@ -54,10 +57,12 @@ chain = prompt | llm
 # Store for chat sessions
 store = {}
 
+
 def get_session_history(session_id: str):
     if session_id not in store:
         store[session_id] = InMemoryChatMessageHistory()
     return store[session_id]
+
 
 # Create the runnable with message history
 with_message_history = RunnableWithMessageHistory(
@@ -67,14 +72,15 @@ with_message_history = RunnableWithMessageHistory(
     history_messages_key="chat_history",
 )
 
+
 def ask_agent(prompt: str, session_id: str = "default"):
     """
     Send a prompt to the AI agent and get a response.
-    
+
     Args:
         prompt: The user's message
         session_id: Session identifier for conversation history
-    
+
     Returns:
         AI response as string
     """
@@ -82,23 +88,23 @@ def ask_agent(prompt: str, session_id: str = "default"):
         # Input validation
         if not prompt or not prompt.strip():
             return "Error: Empty prompt provided"
-        
+
         if len(prompt) > 4000:  # Reasonable limit
             return "Error: Prompt too long (max 4000 characters)"
-        
+
         # Sanitize session_id
         session_id = session_id[:50] if session_id else "default"
-        
+
         logger.info(f"Processing request for session: {session_id}")
-        
+
         response = with_message_history.invoke(
             {"input": prompt.strip()},
-            config={"configurable": {"session_id": session_id}}
+            config={"configurable": {"session_id": session_id}},
         )
-        
+
         logger.info("Request processed successfully")
         return response.content
-        
+
     except Exception as e:
         error_msg = f"Agent error: {str(e)}"
         logger.error(error_msg)

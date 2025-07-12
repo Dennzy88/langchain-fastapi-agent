@@ -29,5 +29,5 @@ def sample_prompts():
         "empty": "",
         "long": "x" * 10001,  # Exceeds limit
         "xss": "<script>alert('xss')</script>",
-        "sql_injection": "'; DROP TABLE users; --"
+        "sql_injection": "'; DROP TABLE users; --",
     }
