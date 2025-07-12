@@ -8,14 +8,12 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![LangChain](https://img.shields.io/badge/LangChain-Latest-orange.svg?style=for-the-badge&logo=chainlink&logoColor=white)](https://python.langchain.com/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-black.svg?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Security](https://img.shields.io/badge/Security-Enhanced-red.svg?style=for-the-badge&logo=shield&logoColor=white)](./SECURITY.md)
 [![Maintenance](https://img.shields.io/badge/Maintained-Yes-brightgreen.svg?style=for-the-badge)](https://github.com/Dennzy88/langchain-fastapi-agent/graphs/commit-activity)
 [![GitHub stars](https://img.shields.io/github/stars/Dennzy88/langchain-fastapi-agent?style=for-the-badge&logo=github)](https://github.com/Dennzy88/langchain-fastapi-agent/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Dennzy88/langchain-fastapi-agent?style=for-the-badge&logo=github)](https://github.com/Dennzy88/langchain-fastapi-agent/network)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-brightgreen.svg?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/Dennzy88/langchain-fastapi-agent/actions)
 
 **🚀 Enterprise-grade AI Agent API with advanced security, persistent memory, and battle-tested deployment**
 
