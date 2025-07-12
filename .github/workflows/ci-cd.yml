@@ -1,0 +1,211 @@
+name: 🚀 CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # 🧪 Testing Job
+  test:
+    name: 🧪 Tests & Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: 📦 Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: 🔧 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov black flake8 safety bandit
+        
+    - name: 🔍 Security scan - Check for secrets
+      run: |
+        if [ -f "security_check.sh" ]; then
+          chmod +x security_check.sh
+          ./security_check.sh
+        fi
+        
+    - name: 🔒 Security scan - Dependencies
+      run: |
+        safety check
+        bandit -r . -x ./venv/,./tests/ -f json -o bandit-report.json || true
+        
+    - name: 🎨 Code formatting check
+      run: |
+        black --check . || (echo "❌ Code formatting issues found. Run 'black .' to fix." && exit 1)
+        
+    - name: 🔍 Linting
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: 🧪 Run tests
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-key-for-ci' }}
+      run: |
+        # Create basic tests if they don't exist
+        if [ ! -d "tests" ]; then
+          mkdir tests
+          cat > tests/test_basic.py << 'EOF'
+          import pytest
+          from fastapi.testclient import TestClient
+          from main import app
+          
+          client = TestClient(app)
+          
+          def test_health_endpoint():
+              response = client.get("/health")
+              assert response.status_code == 200
+              
+          def test_root_endpoint():
+              response = client.get("/")
+              assert response.status_code == 200
+        EOF
+        fi
+        
+        pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+        
+    - name: 📊 Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # 🐳 Docker Build Job  
+  docker:
+    name: 🐳 Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: 🔑 Login to Docker Hub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: 🏗️ Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: |
+          dennzy88/langchain-fastapi-agent:latest
+          dennzy88/langchain-fastapi-agent:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # 🚀 Deploy Job (optional)
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, docker]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🚀 Deploy notification
+      run: |
+        echo "🎉 Deployment would happen here!"
+        echo "   - Container: dennzy88/langchain-fastapi-agent:${{ github.sha }}"
+        echo "   - Branch: ${{ github.ref }}"
+        echo "   - Commit: ${{ github.sha }}"
+        
+    # Uncomment and configure for actual deployment
+    # - name: Deploy to server
+    #   uses: appleboy/ssh-action@v0.1.5
+    #   with:
+    #     host: ${{ secrets.HOST }}
+    #     username: ${{ secrets.USERNAME }}
+    #     key: ${{ secrets.KEY }}
+    #     script: |
+    #       docker pull dennzy88/langchain-fastapi-agent:${{ github.sha }}
+    #       docker stop langchain-agent || true
+    #       docker rm langchain-agent || true
+    #       docker run -d --name langchain-agent -p 8000:8000 \
+    #         -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+    #         dennzy88/langchain-fastapi-agent:${{ github.sha }}
+
+  # 📈 Performance Testing (optional)
+  performance:
+    name: 📈 Performance Tests
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: 🔧 Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install locust
+        
+    - name: 🚀 Start application
+      env:
+        OPENAI_API_KEY: 'sk-test-key-for-performance'
+      run: |
+        uvicorn main:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+        
+    - name: 📈 Run performance tests
+      run: |
+        # Create basic load test
+        cat > locustfile.py << 'EOF'
+        from locust import HttpUser, task, between
+        
+        class APIUser(HttpUser):
+            wait_time = between(1, 3)
+            
+            @task
+            def health_check(self):
+                self.client.get("/health")
+                
+            @task(3)
+            def ask_question(self):
+                self.client.post("/ask", json={
+                    "prompt": "Hello, how are you?",
+                    "session_id": "test-session"
+                })
+        EOF
+        
+        locust -f locustfile.py --headless -u 10 -r 2 -t 30s --host http://localhost:8000
