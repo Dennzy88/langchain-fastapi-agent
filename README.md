@@ -1,23 +1,112 @@
-# LangChain FastAPI Agent
+# 🤖 LangChain FastAPI Agent
 
-Sigurna AI agent aplikacija sa memory funkcionalnostima, izgrađena sa FastAPI i LangChain.
+[![Python](https## 📚 **Dokumentacija**
 
-## 🚀 Funkcionalnosti
+| Fajl | Opis |
+|------|------|
+| [📋 UPUTSTVO.md](./UPUTSTVO.md) | Detaljno uputstvo za instalaciju i korišćenje |
+| [⚡ QUICK_REF.md](./QUICK_REF.md) | Brze komande i reference |
+| [🛠️ TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Rešavanje čestih problema |
+| [🔒 SECURITY.md](./SECURITY.md) | Bezbednosne mere i najbolje prakse |
+| [🚨 GIT_PODSETNIK.md](./GIT_PODSETNIK.md) | Sigurni Git workflow |
+| [📝 CONTRIBUTING.md](./CONTRIBUTING.md) | Vodič za doprinošenje projektu |
+| [📊 CHANGELOG.md](./CHANGELOG.md) | Istorija promena i verzija |
 
-- ✅ **AI Chat Agent** sa GPT-4 modelom
-- ✅ **Conversation Memory** - čuva kontekst razgovora po sesijama
-- ✅ **Input Validation** - validacija unosa i ograničenja
-- ✅ **Rate Limiting** - ograničavanje broja zahteva (10/minut po IP)
-- ✅ **CORS podrška** - za web aplikacije
-- ✅ **Opciono API Key autentifikovanje** 
-- ✅ **Logging** - praćenje zahteva i grešaka
-- ✅ **Health Check** endpointi
-- ✅ **Error Handling** - sigurno rukovanje greškama
+## 🛡️ **Bezbednosne Funkcionalnosti**
 
-## 📋 Zahtevi
+- **🔐 API Key Protection** - `.env` fajlovi nisu u git-u
+- **⚡ Rate Limiting** - Zaštita od zloupotreb (10 req/min po IP)
+- **✅ Input Validation** - Validacija svih korisničkih unosa
+- **🛡️ CORS Protection** - Kontrolisani cross-origin pristup
+- **📝 Security Logging** - Praćenje svih sigurnosnih događaja
+- **🔍 Automated Security Checks** - Pre-commit security scanning
+- **❌ Error Handling** - Sigurne error poruke
+- **🎛️ Environment Isolation** - Virtual environment setup
 
-- Python 3.8+
-- OpenAI API ključ
+## 🚀 **API Endpoints**
+
+### `POST /ask`
+Pošaljite poruku AI agentu i dobijte odgovor sa memory kontekstom.
+
+**Request:**
+```json
+{
+  "prompt": "Hello! How can you help me?",
+  "session_id": "user123"
+}
+```
+
+**Response:**
+```json
+{
+  "reply": "Hello! I'm an AI assistant that can help you with various tasks...",
+  "session_id": "user123", 
+  "status": "success"
+}
+```
+
+### `GET /health`
+Proveri status aplikacije i AI agent-a.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "agent_status": "working",
+  "timestamp": 1752305667.9753249
+}
+```
+
+### `GET /docs`
+Interactive API documentation (Swagger UI) - dostupno na `http://localhost:8000/docs`
+
+## 🎯 **Production Deployment**
+
+Za produkcijsku upotrebu:
+
+```bash
+# 1. Set production environment
+export ENVIRONMENT=production
+
+# 2. Use Gunicorn instead of Uvicorn
+pip install gunicorn
+gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+
+# 3. Enable API key authentication
+export API_KEY="your-secure-api-key"
+
+# 4. Use HTTPS reverse proxy (nginx/traefik)
+# 5. Set up monitoring and logging
+```
+
+Detaljnije u [SECURITY.md](./SECURITY.md).shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
+[![LangChain](https://img.shields.io/badge/LangChain-Latest-orange.svg)](https://python.langchain.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Security](https://img.shields.io/badge/Security-Enhanced-red.svg)](./SECURITY.md)
+
+> **Sigurna AI agent aplikacija sa memory funkcionalnostima, izgrađena sa FastAPI i LangChain.**
+
+Ovaj projekat demonstrira kako kreirati production-ready AI agent API sa naprednim bezbednosnim merama, conversation memory sistemom i kompletnom dokumentacijom.
+
+## ✨ **Ključne Funkcionalnosti**
+
+- 🤖 **GPT-4 AI Agent** sa intelligent conversation handling
+- 💾 **Session-based Memory** - pamti kontekst razgovora po korisnicima
+- 🛡️ **Advanced Security** - input validation, rate limiting, CORS zaštita
+- 📡 **REST API** - production-ready FastAPI endpoints
+- 🔒 **API Key Protection** - sigurno upravljanje secret-ima
+- 📊 **Health Monitoring** - health check endpoints
+- 🚀 **Easy Deployment** - automated scripts i Docker support
+- 📚 **Kompletna Dokumentacija** - step-by-step uputstva
+
+## 🎯 **Use Cases**
+
+- **Customer Support Bots** - AI podrška sa memory
+- **Personal AI Assistants** - pametan pomoćnik
+- **Educational Chatbots** - interaktivno učenje
+- **Business Process Automation** - automatizacija zadataka
+- **API Integration** - dodavanje AI u postojeće aplikacije
 
 ## 🛠️ Instalacija
 
@@ -41,25 +130,74 @@ Sigurna AI agent aplikacija sa memory funkcionalnostima, izgrađena sa FastAPI i
 - **🛠️ [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Rešavanje problema
 - **🔒 [SECURITY.md](./SECURITY.md)** - Bezbednosne mere i preporuke
 
-## 🚀 Brzo Pokretanje
+## 🚀 **Brzo Pokretanje**
+
+### **Preduslovi**
+- Python 3.8+
+- OpenAI API ključ ([dobij ovde](https://platform.openai.com/api-keys))
+
+### **Instalacija**
 
 ```bash
-# 1. Pokreni aplikaciju
+# 1. Kloniraj repository
+git clone https://github.com/your-username/langchain-fastapi-agent.git
+cd langchain-fastapi-agent
+
+# 2. Kreiraj virtual environment
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+# ili: venv\Scripts\activate  # Windows
+
+# 3. Instaliraj dependencies
+pip install -r requirements.txt
+
+# 4. Konfiguriši environment
+cp .env.example .env
+# Edituj .env i dodaj svoj OpenAI API ključ:
+# OPENAI_API_KEY="sk-your-openai-api-key-here"
+
+# 5. Pokreni aplikaciju
 ./start.sh
-
-# 2. Testiraj API
-curl -X POST "http://localhost:8000/ask" \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Zdravo!", "session_id": "test"}'
-
-# 3. Za Git commit (UVEK sa sigurnosnom proverom):
-git add .
-./security_check.sh  # ← OBAVEZNO!
-git commit -m "opis"
 ```
 
-Detaljno uputstvo je u [UPUTSTVO.md](./UPUTSTVO.md).  
-**🚨 Git podsetnik:** [GIT_PODSETNIK.md](./GIT_PODSETNIK.md)
+### **Brzi Test**
+```bash
+curl -X POST "http://localhost:8000/ask" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Hello! How are you?", "session_id": "demo"}'
+```
+
+**Odgovor:**
+```json
+{
+  "reply": "Hello! I'm doing well, thank you for asking. How can I help you today?",
+  "session_id": "demo",
+  "status": "success"
+}
+```
+
+## 🏗️ **Arhitektura**
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Web Client    │───▶│   FastAPI App    │───▶│  LangChain     │
+│                 │    │                  │    │  Agent         │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                │                        │
+                                ▼                        ▼
+                       ┌──────────────────┐    ┌─────────────────┐
+                       │  Security Layer  │    │   OpenAI API    │
+                       │  Rate Limiting   │    │   GPT-4         │
+                       │  Input Validation│    │                 │
+                       └──────────────────┘    └─────────────────┘
+                                │                        │
+                                ▼                        ▼
+                       ┌──────────────────┐    ┌─────────────────┐
+                       │  Session Memory  │    │   Response      │
+                       │  Conversation    │    │   Generation    │
+                       │  History         │    │                 │
+                       └──────────────────┘    └─────────────────┘
+```
 
 ## 📖 API Dokumentacija
 
@@ -180,10 +318,37 @@ Za produkciju:
 
 Detaljnije u `SECURITY.md`.
 
-## 🤝 Doprinos
+## 🤝 **Contributing**
 
-Molimo da testirate aplikaciju i prijavite greške ili predloge za poboljšanje.
+Doprinosi su dobrodošli! Molimo pročitajte [CONTRIBUTING.md](./CONTRIBUTING.md) za detalje o našem kodu ponašanja i procesu slanja pull request-ova.
 
-## 📄 Licenca
+### **Kako doprineti:**
+1. 🍴 Fork repository
+2. 🔧 Kreiraj feature branch (`git checkout -b feature/amazing-feature`)
+3. 📝 Commit-uj izmene (`git commit -m 'Add amazing feature'`)
+4. 🚀 Push-uj na branch (`git push origin feature/amazing-feature`)
+5. 🔀 Otvori Pull Request
 
-MIT License
+## 📄 **Licenca**
+
+Ovaj projekat je licenciran pod MIT licencom - pogledaj [LICENSE](./LICENSE) fajl za detalje.
+
+## 🙏 **Zahvalnice**
+
+- [LangChain](https://python.langchain.com/) - Za fantastičan AI framework
+- [FastAPI](https://fastapi.tiangolo.com/) - Za moderne Python web API
+- [OpenAI](https://openai.com/) - Za GPT-4 model
+- Open source zajednici za inspiraciju i podršku
+
+## 📞 **Podrška**
+
+- 📖 **Dokumentacija**: Pogledaj [DOCS_INDEX.md](./DOCS_INDEX.md)
+- 🐛 **Bug reports**: Otvori issue sa detaljnim opisom
+- 💡 **Feature requests**: Diskutuj u Issues sekciji
+- 🔧 **Problemi**: Konsultuj [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+
+---
+
+**⭐ Ako ti se sviđa ovaj projekat, daj mu zvezdu na GitHub-u!**
+
+**Napravljen sa ❤️ za AI i developer zajednicu**
