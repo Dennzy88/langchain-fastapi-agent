@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: '3.11'
 
 jobs:
   # 🧪 Testing Job
@@ -42,7 +42,10 @@ jobs:
         echo "🐍 Python version: $(python --version)"
         echo "📦 Pip version: $(pip --version)"
         
-        echo "📥 Installing main requirements..."
+        echo "� Installing build tools..."
+        pip install setuptools wheel || { echo "❌ Failed to install build tools"; exit 1; }
+        
+        echo "�📥 Installing main requirements..."
         pip install -r requirements.txt || { echo "❌ Failed to install main requirements"; exit 1; }
         
         echo "📥 Installing dev requirements..."
