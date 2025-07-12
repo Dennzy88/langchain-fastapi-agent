@@ -12,9 +12,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
-from agent import AIAgent
+from agent import ask_agent
 
-client = TestClient(app)
+# Create test client with proper host header
+client = TestClient(app, base_url="http://localhost")
 
 
 class TestHealthEndpoint:
@@ -28,7 +29,7 @@ class TestHealthEndpoint:
         data = response.json()
         assert "status" in data
         assert "timestamp" in data
-        assert "version" in data
+        assert "agent_status" in data
         assert data["status"] in ["healthy", "unhealthy"]
 
     def test_health_endpoint_structure(self):
@@ -36,7 +37,7 @@ class TestHealthEndpoint:
         response = client.get("/health")
         data = response.json()
         
-        required_fields = ["status", "timestamp", "version", "ai_agent_status"]
+        required_fields = ["status", "timestamp", "agent_status"]
         for field in required_fields:
             assert field in data
 
@@ -60,8 +61,8 @@ class TestRootEndpoint:
         
         assert isinstance(data, dict)
         assert "message" in data
-        assert "docs" in data
-        assert "health" in data
+        assert "status" in data
+        assert "version" in data
 
 
 class TestAskEndpoint:
@@ -112,11 +113,11 @@ class TestAskEndpoint:
             }
         )
         
-        assert response.status_code == 400
+        assert response.status_code == 422  # Pydantic validation error
 
     def test_ask_endpoint_long_prompt(self):
         """Test error when prompt is too long"""
-        long_prompt = "x" * 10001  # Exceeds 10000 char limit
+        long_prompt = "x" * 4001  # Exceeds 4000 char limit (changed from 10001)
         
         response = client.post(
             "/ask",
@@ -126,7 +127,7 @@ class TestAskEndpoint:
             }
         )
         
-        assert response.status_code == 400
+        assert response.status_code == 422  # Pydantic validation error
 
     def test_ask_endpoint_default_session(self):
         """Test default session ID assignment"""
@@ -151,29 +152,72 @@ class TestAIAgent:
     
     @patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-key"})
     @patch('agent.ChatOpenAI')
-    def test_agent_initialization(self, mock_openai):
-        """Test AI agent can be initialized"""
-        agent = AIAgent()
-        assert agent is not None
-        assert hasattr(agent, 'get_response')
+    def test_agent_function_exists(self, mock_openai):
+        """Test AI agent function exists and is callable"""
+        from agent import ask_agent
+        assert callable(ask_agent)
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-key"})
-    @patch('agent.ChatOpenAI')
-    def test_agent_memory_persistence(self, mock_openai):
-        """Test that agent remembers conversation history"""
-        mock_llm = MagicMock()
-        mock_llm.invoke.return_value.content = "I remember that."
-        mock_openai.return_value = mock_llm
+    @patch('agent.with_message_history')
+    def test_agent_basic_response(self, mock_chain):
+        """Test basic agent response"""
+        # Mock the chain response
+        mock_response = MagicMock()
+        mock_response.content = "Hello! I'm working correctly."
+        mock_chain.invoke.return_value = mock_response
         
-        agent = AIAgent()
+        response = ask_agent("Hello, are you working?", "test-session")
+        assert response == "Hello! I'm working correctly."
+
+    def test_agent_empty_prompt_validation(self):
+        """Test agent handles empty prompts"""
+        response = ask_agent("", "test-session")
+        assert "Error: Empty prompt provided" in response
         
-        # First interaction
-        response1 = agent.get_response("My name is John", "test-session")
-        assert response1 is not None
+        response = ask_agent("   ", "test-session")  # Only whitespace
+        assert "Error: Empty prompt provided" in response
+
+    def test_agent_long_prompt_validation(self):
+        """Test agent handles overly long prompts"""
+        long_prompt = "x" * 4001  # Exceeds 4000 char limit
+        response = ask_agent(long_prompt, "test-session")
+        assert "Error: Prompt too long" in response
+
+    def test_agent_session_id_handling(self):
+        """Test session ID handling and sanitization"""
+        with patch('agent.with_message_history') as mock_chain:
+            mock_response = MagicMock()
+            mock_response.content = "Test response"
+            mock_chain.invoke.return_value = mock_response
+            
+            # Test default session
+            response = ask_agent("Hello")
+            assert response == "Test response"
+            
+            # Test custom session
+            response = ask_agent("Hello", "custom-session")
+            assert response == "Test response"
+
+    def test_agent_session_memory(self):
+        """Test that agent maintains session memory"""
+        from agent import get_session_history, store
         
-        # Second interaction - should have memory
-        response2 = agent.get_response("What's my name?", "test-session")
-        assert response2 is not None
+        # Clear store for clean test
+        store.clear()
+        
+        # Test that session history is created for new sessions
+        history1 = get_session_history("session1")
+        history2 = get_session_history("session2")
+        history1_again = get_session_history("session1")
+        
+        # Should be different objects for different sessions
+        assert history1 is not history2
+        # Should be same object for same session
+        assert history1 is history1_again
+        
+        # Verify sessions are stored
+        assert "session1" in store
+        assert "session2" in store
 
 
 class TestSecurity:
