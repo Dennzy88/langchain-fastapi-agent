@@ -1,0 +1,100 @@
+name: 🚀 CI/CD Pipeline (Python 3.11 Fallback)
+
+on:
+  workflow_dispatch:  # Manual trigger only
+  
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # 🧪 Testing Job with Python 3.11
+  test:
+    name: 🧪 Tests & Quality Checks (Python 3.11)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: 📦 Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}-${{ env.PYTHON_VERSION }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+          ${{ runner.os }}-pip-
+          
+    - name: 🔧 Install dependencies
+      run: |
+        set -e  # Exit on any error
+        echo "⚙️ Upgrading pip..."
+        python -m pip install --upgrade pip || { echo "❌ Failed to upgrade pip"; exit 1; }
+        
+        echo "🐍 Python version: $(python --version)"
+        echo "📦 Pip version: $(pip --version)"
+        
+        echo "📥 Installing main requirements..."
+        pip install -r requirements.txt || { echo "❌ Failed to install main requirements"; exit 1; }
+        
+        echo "📥 Installing dev requirements..."
+        pip install -r requirements-dev.txt || { echo "❌ Failed to install dev requirements"; exit 1; }
+        
+        echo "✅ Installed packages:"
+        pip list
+        
+    - name: 🔍 Security scan - Check for secrets
+      run: |
+        if [ -f "security_check.sh" ]; then
+          chmod +x security_check.sh
+          ./security_check.sh
+        fi
+        
+    - name: 🔒 Security scan - Dependencies
+      run: |
+        safety check
+        bandit -r . -x ./venv/,./tests/ -f json -o bandit-report.json || true
+        
+    - name: 🎨 Code formatting check
+      run: |
+        black --check . --exclude="/(\.git|\.github|__pycache__|\.pytest_cache|\.coverage|venv|node_modules)/" || (echo "❌ Code formatting issues found. Run 'black .' to fix." && exit 1)
+        
+    - name: 🔍 Linting
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv,__pycache__,.git,.github
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=venv,__pycache__,.git,.github
+        
+    - name: 🔍 Verify imports
+      env:
+        OPENAI_API_KEY: sk-test-key-for-ci
+      run: |
+        set -e  # Exit on any error
+        echo "🔍 Testing Python imports..."
+        python -c "import agent; print('✅ agent.py imports successfully')" || { echo "❌ Failed to import agent"; exit 1; }
+        python -c "import main; print('✅ main.py imports successfully')" || { echo "❌ Failed to import main"; exit 1; }
+        python -c "from fastapi.testclient import TestClient; from main import app; print('✅ FastAPI app loads successfully')" || { echo "❌ Failed to load FastAPI app"; exit 1; }
+        
+    - name: 🧪 Run tests
+      env:
+        OPENAI_API_KEY: sk-test-key-for-ci
+      run: |
+        set -e  # Exit on any error
+        echo "🐍 Python executable: $(which python)"
+        echo "🐍 Python version: $(python --version)"
+        echo "📁 Current directory: $(pwd)"
+        echo "📂 Directory contents:"
+        ls -la
+        echo "🧪 Starting tests..."
+        pytest tests/ -v --cov=. --cov-report=xml --cov-report=html --tb=short || { echo "❌ Tests failed"; exit 1; }
+        
+    - name: 📊 Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
