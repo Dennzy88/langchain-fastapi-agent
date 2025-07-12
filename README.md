@@ -21,6 +21,8 @@
 
 *Transform your applications with intelligent conversational AI that remembers, learns, and scales*
 
+**🗓️ Last Updated: July 12, 2025 | 🏷️ Version: 2.0.0 | 🔥 Status: Production Ready**
+
 [🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation) • [🛡️ Security](#️-security-features) • [🤝 Contributing](#-contributing) • [🌟 Demo](#-demo)
 
 ---
