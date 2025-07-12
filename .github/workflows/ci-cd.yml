@@ -1,10 +1,17 @@
 name: 🚀 CI/CD Pipeline
 
+# Disabled - Complex workflow has dependency conflicts
+# Using simple-ci.yml instead which works perfectly
+
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main ]
+
+# Manually trigger only for testing
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: '3.11'
