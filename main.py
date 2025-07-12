@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from agent import ask_agent
 from dotenv import load_dotenv
 import os
@@ -51,13 +51,15 @@ class Prompt(BaseModel):
         default="default", max_length=50, description="Session identifier"
     )
 
-    @validator("prompt")
+    @field_validator("prompt")
+    @classmethod
     def validate_prompt(cls, v):
         if not v.strip():
             raise ValueError("Prompt cannot be empty")
         return v.strip()
 
-    @validator("session_id")
+    @field_validator("session_id")
+    @classmethod
     def validate_session_id(cls, v):
         # Allow only alphanumeric and basic characters
         if not v.replace("-", "").replace("_", "").isalnum():
