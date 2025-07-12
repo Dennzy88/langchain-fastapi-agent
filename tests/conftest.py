@@ -4,7 +4,21 @@ Test configuration and fixtures
 
 import pytest
 import os
+import sys
 from unittest.mock import patch
+
+# Add parent directory to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_environment():
+    """Set up test environment before all tests"""
+    # Ensure we have the required environment variable
+    if "OPENAI_API_KEY" not in os.environ:
+        os.environ["OPENAI_API_KEY"] = "sk-test-key-for-testing"
+    yield
+    # Cleanup if needed
 
 
 @pytest.fixture
